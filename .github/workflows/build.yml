@@ -1,0 +1,62 @@
+name: Build Custom Fast APK
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Install Cordova and Construct App
+        run: |
+          npm install -g cordova
+          cordova create my_app com.custom6499297551.app "XO"
+          cd my_app
+          cordova platform add android
+          cordova plugin add cordova-plugin-inappbrowser
+          mkdir -p res
+          if [ -f ../.github/workflows/icon.png ]; then cp ../.github/workflows/icon.png res/icon.png; fi
+          echo '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24"></vector>' > res/transparent_splash.xml
+          
+          echo '<widget id="com.custom6499297551.app" version="1.0.0" xmlns="http://www.w3.org/ns/widgets">' > config.xml
+          echo '    <name>XO</name>' >> config.xml
+          echo '    <description>Custom Dynamic App</description>' >> config.xml
+          echo '    <author>Dynamic Builder</author>' >> config.xml
+          echo '    <content src="index.html" />' >> config.xml
+          echo '    <access origin="*" />' >> config.xml
+          echo '    <allow-navigation href="https://claude.ai/public/artifacts/9b8c0e21-c50d-4ffe-8636-8c7607125bad*" />' >> config.xml
+          echo '    <allow-intent href="http://*/*" />' >> config.xml
+          echo '    <allow-intent href="https://*/*" />' >> config.xml
+          echo '    <preference name="Orientation" value="portrait" />' >> config.xml
+          echo '    <preference name="loadUrlTimeoutValue" value="300000" />' >> config.xml
+          echo '    <preference name="AndroidWindowSplashScreenBackground" value="#121212" />' >> config.xml
+          echo '    <preference name="AndroidWindowSplashScreenAnimatedIcon" value="res/transparent_splash.xml" />' >> config.xml
+          echo '    <preference name="AndroidWindowSplashScreenIconBackgroundColor" value="#121212" />' >> config.xml
+          echo '    <platform name="android"><icon src="res/icon.png" /></platform>' >> config.xml
+          echo '</widget>' >> config.xml
+          
+          if [ -f ../.github/workflows/loading.jpg ]; then cp ../.github/workflows/loading.jpg www/loading_sticker.jpg; fi
+          
+          echo '<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover"><title>XO</title>' > www/index.html
+          echo '    <style>body { margin: 0; padding: 0; background-color: #121212; color: #ffffff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: space-between; height: 100vh; box-sizing: border-box; padding: 60px 20px; text-align: center; overflow: hidden; user-select: none; } .header { font-size: 24px; font-weight: bold; color: #ffffff; direction: rtl; margin-top: 20px; z-index: 10; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }  .sticker { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 99vw; height: 99vh; object-fit: contain; z-index: 1; } .footer-container { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 40px; direction: rtl; z-index: 10; background: rgba(18, 18, 18, 0.6); padding: 10px 25px; border-radius: 30px; backdrop-filter: blur(5px); } .footer-text { font-size: 18px; color: #e0e0e0; font-weight: 500; } .spinner { width: 28px; height: 28px; border: 4px solid rgba(255,255,255,0.1); border-top-color: #ffffff; border-radius: 50%; animation: spin 1s infinite linear; } @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } } .error-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #121212; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; padding: 20px; box-sizing: border-box; } .error-box { background: #1e1e1e; padding: 30px 20px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); max-width: 90%; width: 340px; text-align: center; } .error-title { font-size: 20px; font-weight: bold; color: #ff4a4a; margin-bottom: 12px; direction: rtl; } .error-desc { font-size: 15px; color: #b3b3b3; margin-bottom: 25px; line-height: 1.5; direction: rtl; } .retry-btn { background: #ffffff; color: #121212; border: none; padding: 12px 35px; font-size: 16px; font-weight: bold; border-radius: 25px; cursor: pointer; transition: background 0.2s; width: 100%; } .retry-btn:active { background: #cccccc; }</style>' >> www/index.html
+          echo '    <script src="cordova.js"></script></head>' >> www/index.html
+          echo '<body>' >> www/index.html
+          echo '    <div class="header">FROM Momen ♡</div>' >> www/index.html
+          echo '    <img class="sticker" src="loading_sticker.jpg" alt="">' >> www/index.html
+          echo '    <div class="footer-container" id="loadingFooter"><div class="spinner"></div><div class="footer-text">Loading...</div></div>' >> www/index.html
+          echo '    <div class="error-overlay" id="errorOverlay"><div class="error-box"><div class="error-title">أنت غير متصل بالإنترنت</div><div class="error-desc">يرجى التحقق من اتصال شبكة الهاتف أو الواي فاي وإعادة المحاولة.</div><button class="retry-btn" onclick="openWebsite()">إعادة المحاولة</button></div></div>' >> www/index.html
+          echo '    <script>var siteUrl = "https://claude.ai/public/artifacts/9b8c0e21-c50d-4ffe-8636-8c7607125bad"; function showError() { document.getElementById("errorOverlay").style.display = "flex"; } function openWebsite() { document.getElementById("errorOverlay").style.display = "none"; if (!navigator.onLine) { setTimeout(showError, 500); return; } var ref = cordova.InAppBrowser.open(siteUrl, "_self", "location=no,zoom=no,hidden=yes,clearcache=no,clearsessioncache=no,hidespinner=yes"); ref.addEventListener("loadstop", function() { ref.show(); }); ref.addEventListener("loaderror", function(params) { showError(); }); } document.addEventListener("deviceready", function() { setTimeout(openWebsite, 2000); }, false);</script>' >> www/index.html
+          echo '</body></html>' >> www/index.html
+          cordova build android --device
+      - name: Upload Perfect APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: xo-App
+          path: my_app/platforms/android/app/build/outputs/apk/debug/*.apk
